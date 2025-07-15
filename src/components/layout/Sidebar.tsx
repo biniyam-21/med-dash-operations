@@ -13,6 +13,7 @@ import {
   User,
   LogOut,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Plus,
   Eye,
@@ -151,9 +152,11 @@ const navigationItems: NavItem[] = [
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  isCollapsed: boolean;
+  onToggleCollapsed: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggleCollapsed }) => {
   const { user, hasPermission, logout } = useAuth();
   const location = useLocation();
   const [expandedItems, setExpandedItems] = useState<string[]>(['inventory', 'sales']);
@@ -188,7 +191,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       return (
         <div key={item.id} className="mb-1">
           <button
-            onClick={() => toggleExpanded(item.id)}
+            onClick={() => !isCollapsed && toggleExpanded(item.id)}
             className={cn(
               "w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-colors",
               isActive 
@@ -196,19 +199,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
               level > 0 && "ml-4"
             )}
+            title={isCollapsed ? item.label : undefined}
           >
             <div className="flex items-center gap-3">
-              <Icon className="h-4 w-4" />
-              <span>{item.label}</span>
+              <Icon className="h-4 w-4 flex-shrink-0" />
+              {!isCollapsed && <span>{item.label}</span>}
             </div>
-            {isExpanded ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
+            {!isCollapsed && (
+              isExpanded ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )
             )}
           </button>
           
-          {isExpanded && (
+          {!isCollapsed && isExpanded && (
             <div className="mt-1 space-y-1">
               {item.children?.map(child => renderNavItem(child, level + 1))}
             </div>
@@ -229,9 +235,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             level > 0 && "ml-4"
           )}
           onClick={() => window.innerWidth < 768 && onClose()}
+          title={isCollapsed ? item.label : undefined}
         >
-          <Icon className="h-4 w-4" />
-          <span>{item.label}</span>
+          <Icon className="h-4 w-4 flex-shrink-0" />
+          {!isCollapsed && <span>{item.label}</span>}
         </NavLink>
       </div>
     );
@@ -249,29 +256,60 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       
       {/* Sidebar */}
       <aside className={cn(
-        "fixed top-0 left-0 z-50 h-full w-72 bg-card border-r border-border transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-auto",
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+        "fixed top-0 left-0 z-50 h-full bg-card border-r border-border transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-auto",
+        isOpen ? "translate-x-0" : "-translate-x-full",
+        // Desktop width - collapsed vs expanded
+        "lg:w-16 lg:data-[expanded=true]:w-72",
+        isCollapsed ? "lg:w-16" : "lg:w-72",
+        // Mobile always full width
+        "w-72"
+      )}
+      data-expanded={!isCollapsed}
+      >
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-border">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
+            <div className={cn(
+              "flex items-center gap-3 transition-all duration-300",
+              isCollapsed && "lg:justify-center lg:gap-0"
+            )}>
+              <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center flex-shrink-0">
                 <Cross className="h-4 w-4 text-white" />
               </div>
-              <div>
-                <h1 className="text-lg font-bold text-foreground">PharmaCare</h1>
-                <p className="text-xs text-muted-foreground">Inventory System</p>
-              </div>
+              {!isCollapsed && (
+                <div className="lg:block">
+                  <h1 className="text-lg font-bold text-foreground">PharmaCare</h1>
+                  <p className="text-xs text-muted-foreground">Inventory System</p>
+                </div>
+              )}
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="lg:hidden"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            
+            <div className="flex items-center gap-2">
+              {/* Desktop toggle button - only visible on lg+ screens */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onToggleCollapsed}
+                className="hidden lg:flex"
+                title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {isCollapsed ? (
+                  <ChevronRight className="h-4 w-4" />
+                ) : (
+                  <ChevronLeft className="h-4 w-4" />
+                )}
+              </Button>
+              
+              {/* Mobile close button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="lg:hidden"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {/* Navigation */}
@@ -283,35 +321,42 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
           {/* User section */}
           <div className="p-4 border-t border-border">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+            <div className={cn(
+              "flex items-center gap-3 mb-3",
+              isCollapsed && "lg:justify-center lg:gap-0"
+            )}>
+              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
                 <User className="h-4 w-4 text-primary-foreground" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">
-                  {user?.name}
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {user?.role}
-                </p>
-              </div>
+              {!isCollapsed && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {user?.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {user?.role}
+                  </p>
+                </div>
+              )}
             </div>
             
             <div className="space-y-1">
               <NavLink
                 to="/profile"
                 className="flex items-center gap-3 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
+                title={isCollapsed ? "Profile" : undefined}
               >
-                <User className="h-4 w-4" />
-                <span>Profile</span>
+                <User className="h-4 w-4 flex-shrink-0" />
+                {!isCollapsed && <span>Profile</span>}
               </NavLink>
               
               <button
                 onClick={logout}
                 className="w-full flex items-center gap-3 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
+                title={isCollapsed ? "Logout" : undefined}
               >
-                <LogOut className="h-4 w-4" />
-                <span>Logout</span>
+                <LogOut className="h-4 w-4 flex-shrink-0" />
+                {!isCollapsed && <span>Logout</span>}
               </button>
             </div>
           </div>

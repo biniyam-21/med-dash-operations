@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { user } = useAuth();
 
   if (!user) {
@@ -24,7 +25,9 @@ export const Layout: React.FC = () => {
       <div className="flex h-screen overflow-hidden">
         <Sidebar 
           isOpen={sidebarOpen} 
-          onClose={() => setSidebarOpen(false)} 
+          onClose={() => setSidebarOpen(false)}
+          isCollapsed={sidebarCollapsed}
+          onToggleCollapsed={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
         
         <div className="flex-1 flex flex-col overflow-hidden lg:ml-0">
