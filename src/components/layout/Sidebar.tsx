@@ -257,34 +257,39 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, 
       {/* Sidebar */}
       <aside className={cn(
         "fixed top-0 left-0 z-50 h-full bg-card border-r border-border transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-auto",
+        // Mobile behavior
         isOpen ? "translate-x-0" : "-translate-x-full",
-        // Desktop width - collapsed vs expanded
-        "lg:w-16 lg:data-[expanded=true]:w-72",
-        isCollapsed ? "lg:w-16" : "lg:w-72",
-        // Mobile always full width
-        "w-72"
-      )}
-      data-expanded={!isCollapsed}
-      >
+        "w-72 lg:w-auto", // Mobile full width, desktop auto
+        // Desktop width states
+        isCollapsed ? "lg:w-16" : "lg:w-72"
+      )}>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-border">
+          <div className={cn(
+            "flex items-center border-b border-border transition-all duration-300",
+            isCollapsed ? "justify-center p-3" : "justify-between p-6"
+          )}>
             <div className={cn(
-              "flex items-center gap-3 transition-all duration-300",
-              isCollapsed && "lg:justify-center lg:gap-0"
+              "flex items-center transition-all duration-300",
+              isCollapsed ? "gap-0" : "gap-3"
             )}>
               <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center flex-shrink-0">
                 <Cross className="h-4 w-4 text-white" />
               </div>
-              {!isCollapsed && (
-                <div className="lg:block">
-                  <h1 className="text-lg font-bold text-foreground">PharmaCare</h1>
-                  <p className="text-xs text-muted-foreground">Inventory System</p>
-                </div>
-              )}
+              <div className={cn(
+                "transition-all duration-300 overflow-hidden",
+                isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
+              )}>
+                <h1 className="text-lg font-bold text-foreground whitespace-nowrap">PharmaCare</h1>
+                <p className="text-xs text-muted-foreground whitespace-nowrap">Inventory System</p>
+              </div>
             </div>
             
-            <div className="flex items-center gap-2">
+            {/* Toggle button for desktop */}
+            <div className={cn(
+              "flex items-center gap-2",
+              isCollapsed ? "absolute top-3 right-3" : ""
+            )}>
               {/* Desktop toggle button - only visible on lg+ screens */}
               <Button
                 variant="ghost"
